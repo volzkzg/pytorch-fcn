@@ -17,11 +17,11 @@ configurations = {
     # https://github.com/shelhamer/fcn.berkeleyvision.org
     1: dict(
         max_iteration=100000,
-        lr=1.0e-14,
+        lr=1.0e-10,
         momentum=0.99,
         weight_decay=0.0005,
         interval_validate=4000,
-        fcn16s_pretrained_model=torchfcn.models.FCN16s.download(),
+        fcn16s_pretrained_model=torchfcn.models.FCN16s.pretrained_model,
     )
 }
 
@@ -39,7 +39,7 @@ def main():
 
     gpu = args.gpu
     cfg = configurations[args.config]
-    out = get_log_dir('fcn8s', args.config, cfg)
+    out = get_log_dir('fcn8s-atonce', args.config, cfg)
     resume = args.resume
 
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)
@@ -63,7 +63,7 @@ def main():
 
     # 2. model
 
-    model = torchfcn.models.FCN8s(n_class=21)
+    model = torchfcn.models.FCN8sAtOnce(n_class=21)
     start_epoch = 0
     start_iteration = 0
     if resume:
@@ -72,9 +72,8 @@ def main():
         start_epoch = checkpoint['epoch']
         start_iteration = checkpoint['iteration']
     else:
-        fcn16s = torchfcn.models.FCN16s()
-        fcn16s.load_state_dict(torch.load(cfg['fcn16s_pretrained_model']))
-        model.copy_params_from_fcn16s(fcn16s)
+        vgg16 = torchfcn.models.VGG16(pretrained=True)
+        model.copy_params_from_vgg16(vgg16)
     if cuda:
         model = model.cuda()
 

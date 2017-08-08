@@ -33,11 +33,14 @@ def git_hash():
     return hash
 
 
-def get_log_dir(config_id, cfg):
+def get_log_dir(model_name, config_id, cfg):
     # load config
-    name = 'CFG-%03d' % config_id
+    name = 'MODEL-%s_CFG-%03d' % (model_name, config_id)
     for k, v in cfg.items():
-        name += '_%s-%s' % (k.upper(), str(v))
+        v = str(v)
+        if '/' in v:
+            continue
+        name += '_%s-%s' % (k.upper(), v)
     now = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
     name += '_VCS-%s' % git_hash()
     name += '_TIME-%s' % now.strftime('%Y%m%d-%H%M%S')
@@ -58,6 +61,8 @@ def get_parameters(model, bias=False):
         nn.Dropout2d,
         nn.Sequential,
         torchfcn.models.FCN32s,
+        torchfcn.models.FCN16s,
+        torchfcn.models.FCN8s,
     )
     for m in model.modules():
         if isinstance(m, nn.Conv2d):
@@ -88,7 +93,7 @@ def main():
 
     gpu = args.gpu
     cfg = configurations[args.config]
-    out = get_log_dir(args.config, cfg)
+    out = get_log_dir('fcn32s', args.config, cfg)
     resume = args.resume
 
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)

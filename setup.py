@@ -9,7 +9,21 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-__version__ = '1.6.1'
+__version__ = '1.7.0'
+
+
+if sys.argv[-1] == 'release':
+    import shlex
+    import subprocess
+    commands = [
+        'python setup.py sdist',
+        'twine upload dist/torchfcn-{0}.tar.gz'.format(__version__),
+        'git tag v{0}'.format(__version__),
+        'git push origin master --tags',
+    ]
+    for cmd in commands:
+        subprocess.call(shlex.split(cmd))
+    sys.exit(0)
 
 
 try:
