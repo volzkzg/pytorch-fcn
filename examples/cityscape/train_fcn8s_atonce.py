@@ -54,14 +54,14 @@ def main():
     root = osp.expanduser('~/data/datasets')
     kwargs = {'num_workers': 4, 'pin_memory': True} if cuda else {}
     train_loader = torch.utils.data.DataLoader(
-        torchfcn.datasets.CityScapesClassSegBase(
-            root, split='train', transform=True, preprocess=True,
+        torchfcn.datasets.CityScapesClassSeg(
+            root, split='train', transform=True, preprocess=False,
         ), batch_size=1, shuffle=True, **kwargs
     )
     val_loader = torch.utils.data.DataLoader(
-        torchfcn.datasets.CityScapesClassSegBase(
-            root, split='val', transform=True
-        ), batch_size=1, shuffle=True, **kwargs
+        torchfcn.datasets.CityScapesClassSeg(
+            root, split='val', transform=True, preprocess=False,
+        ), batch_size=1, shuffle=False, **kwargs
     )
 
     # train_loader = torch.utils.data.DataLoader(
@@ -74,7 +74,8 @@ def main():
 
     # 2. model
 
-    model = torchfcn.models.FCN8sAtOnce(n_class=21)
+    model = torchfcn.models.FCN8sAtOnce(n_class=20)
+
     start_epoch = 0
     start_iteration = 0
     if resume:

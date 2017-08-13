@@ -17,6 +17,8 @@ import torchfcn
 
 
 def cross_entropy2d(input, target, weight=None, size_average=True):
+    # from ipdb import set_trace
+    # set_trace()
     # input: (n, c, h, w), target: (n, h, w)
     n, c, h, w = input.size()
     # log_p: (n, c, h, w)
@@ -28,6 +30,9 @@ def cross_entropy2d(input, target, weight=None, size_average=True):
     # target: (n*h*w,)
     mask = target >= 0
     target = target[mask]
+    # print(log_p.size(), target.size())
+    # for i in target:
+    #     print(i)
     loss = F.nll_loss(log_p, target, weight=weight, size_average=False)
     if size_average:
         loss /= mask.data.sum()
