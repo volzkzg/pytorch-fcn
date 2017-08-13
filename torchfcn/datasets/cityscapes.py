@@ -111,9 +111,9 @@ class CityScapesClassSeg(data.Dataset):
 
             for did in open(imgsets_file):
                 did = did.strip()
-                img_file = osp.join(city_img_dir, '%s_leftImg8bit.png' % did)
+                img_file = osp.join(city_img_dir, '%s.png' % did)
                 lbl_file = osp.join(
-                    city_lbl_dir, '%s_gtFine_labelIds.png' % did
+                    city_lbl_dir, '%s.png' % did
                 )
                 self.files.append({
                     'img': img_file,
@@ -141,7 +141,6 @@ class CityScapesClassSeg(data.Dataset):
         lbl = PIL.Image.open(lbl_file)
         lbl = np.array(lbl, dtype=np.int32)
 
-        # print(str(w) + ' ' + str(h))
         w, h = lbl.shape
         lbl = lbl.reshape(-1)
         vfunc = np.vectorize(self.myfunc)
