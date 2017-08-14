@@ -2,6 +2,7 @@ import os.path as osp
 
 import fcn
 import torch.nn as nn
+import torch
 
 from .fcn32s import get_upsampling_weight
 
@@ -272,3 +273,9 @@ class FCN8sAtOnce(FCN8s):
             l2 = getattr(self, name)
             l2.weight.data.copy_(l1.weight.data.view(l2.weight.size()))
             l2.bias.data.copy_(l1.bias.data.view(l2.bias.size()))
+
+def pretrained_FCN8sAtOnce(pretrained_model):
+    model = FCN8sAtOnce(n_class=20)
+    checkpoint = torch.load(pretrained_model)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    return model

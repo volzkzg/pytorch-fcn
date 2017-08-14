@@ -56,12 +56,12 @@ def main():
     train_loader = torch.utils.data.DataLoader(
         torchfcn.datasets.CityScapesClassSeg(
             root, split='train', transform=True, preprocess=False,
-        ), batch_size=8, shuffle=True, **kwargs
+        ), batch_size=1, shuffle=True, **kwargs
     )
     val_loader = torch.utils.data.DataLoader(
         torchfcn.datasets.CityScapesClassSeg(
             root, split='val', transform=True, preprocess=False,
-        ), batch_size=8, shuffle=False, **kwargs
+        ), batch_size=1, shuffle=False, **kwargs
     )
 
     # train_loader = torch.utils.data.DataLoader(
@@ -87,11 +87,7 @@ def main():
         vgg16 = torchfcn.models.VGG16(pretrained=True)
         model.copy_params_from_vgg16(vgg16)
     if cuda:
-        print(torch.cuda.device_count())
-        if torch.cuda.device_count() == 1:
-            model = model.cuda()
-        else:
-            model = torch.nn.DataParallel(model).cuda()
+        model = model.cuda()
 
     # 3. optimizer
 
