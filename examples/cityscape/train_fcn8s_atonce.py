@@ -31,7 +31,7 @@ here = osp.dirname(osp.abspath(__file__))
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-g', '--gpu', type=int, required=True)
+    parser.add_argument('-g', '--gpu', type=str, required=True)
     parser.add_argument('-c', '--config', type=int, default=1,
                         choices=configurations.keys())
     parser.add_argument('--resume', help='Checkpoint path')
@@ -56,12 +56,12 @@ def main():
     train_loader = torch.utils.data.DataLoader(
         torchfcn.datasets.CityScapesClassSeg(
             root, split='train', transform=True, preprocess=False,
-        ), batch_size=1, shuffle=True, **kwargs
+        ), batch_size=8, shuffle=True, **kwargs
     )
     val_loader = torch.utils.data.DataLoader(
         torchfcn.datasets.CityScapesClassSeg(
             root, split='val', transform=True, preprocess=False,
-        ), batch_size=1, shuffle=False, **kwargs
+        ), batch_size=8, shuffle=False, **kwargs
     )
 
     # train_loader = torch.utils.data.DataLoader(
@@ -87,7 +87,11 @@ def main():
         vgg16 = torchfcn.models.VGG16(pretrained=True)
         model.copy_params_from_vgg16(vgg16)
     if cuda:
-        model = model.cuda()
+        print(torch.cuda.device_count())
+        if torch.cuda.device_count() == 1:
+            model = model.cuda()
+        else:
+            model = torch.nn.DataParallel(model).cuda()
 
     # 3. optimizer
 
@@ -111,7 +115,6 @@ def main():
         val_loader=val_loader,
         out=out,
         max_iter=cfg['max_iteration'],
-        interval_validate=cfg.get('interval_validate', len(train_loader)),
     )
     trainer.epoch = start_epoch
     trainer.iteration = start_iteration
