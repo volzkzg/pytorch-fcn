@@ -41,9 +41,10 @@ def cross_entropy2d(input, target, weight=None, size_average=True):
 
 class Trainer(object):
 
-    def __init__(self, cuda, model, optimizer,
+    def __init__(self, cuda, model, optimizer, nEpochs,
                  train_loader, val_loader, out, max_iter,
-                 size_average=False, interval_validate=None):
+                 size_average=False, interval_validate=None,
+                 mix_loader=None):
         self.cuda = cuda
 
         self.model = model
@@ -51,6 +52,7 @@ class Trainer(object):
 
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.mix_loader = mix_loader
 
         self.timestamp_start = \
             datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
@@ -88,6 +90,7 @@ class Trainer(object):
         self.iteration = 0
         self.max_iter = max_iter
         self.best_mean_iu = 0
+        self.nEpochs = nEpochs
 
     def validate(self):
         self.model.eval()
@@ -159,14 +162,14 @@ class Trainer(object):
             shutil.copy(osp.join(self.out, 'checkpoint.pth.tar'),
                         osp.join(self.out, 'model_best.pth.tar'))
 
-    def train_epoch(self):
+    def train_epoch(self, ds):
         self.model.train()
 
         n_class = len(self.train_loader.dataset.class_names)
 
         for batch_idx, (data, target) in tqdm.tqdm(
-                enumerate(self.train_loader), total=len(self.train_loader),
-                desc='Train epoch=%d' % self.epoch, ncols=80, leave=False):
+                enumerate(ds), total=len(ds),
+                desc='Train epoch=%d' % self.epoch, leave=False):
             iteration = batch_idx + self.epoch * len(self.train_loader)
             if self.iteration != 0 and (iteration - 1) != self.iteration:
                 continue  # for resuming
@@ -208,14 +211,20 @@ class Trainer(object):
                 log = map(str, log)
                 f.write(','.join(log) + '\n')
 
-            if self.iteration >= self.max_iter:
-                break
+            # if self.iteration >= self.max_iter:
+            #     break
 
     def train(self):
-        max_epoch = int(math.ceil(1. * self.max_iter / len(self.train_loader)))
-        for epoch in tqdm.trange(self.epoch, max_epoch,
-                                 desc='Train', ncols=80):
+        # max_epoch = int(math.ceil(1. * self.max_iter / len(self.train_loader)))
+        for epoch in tqdm.trange(self.epoch, 2 * self.nEpochs,
+                                 desc='Train on train_loader'):
             self.epoch = epoch
-            self.train_epoch()
-            if self.iteration >= self.max_iter:
-                break
+            if epoch < self.nEpochs:
+                self.train_epoch(self.train_loader)
+            else:
+                if self.mix_loader is None:
+                    break
+                self.train_epoch(self.mix_loader)
+
+            # if self.iteration >= self.max_iter:
+            #     break

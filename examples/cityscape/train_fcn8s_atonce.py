@@ -53,14 +53,19 @@ def main():
 
     root = osp.expanduser('~/data/datasets')
     kwargs = {'num_workers': 4, 'pin_memory': True} if cuda else {}
+    mix_loader = torch.utils.data.DataLoader(
+        torchfcn.datasets.CityScapesClassSeg(
+            root, split=['train', 'val'], transform=True, preprocess=False,
+        ), batch_size=1, shuffle=True, **kwargs
+    )
     train_loader = torch.utils.data.DataLoader(
         torchfcn.datasets.CityScapesClassSeg(
-            root, split='train', transform=True, preprocess=False,
+            root, split=['train'], transform=True, preprocess=False,
         ), batch_size=1, shuffle=True, **kwargs
     )
     val_loader = torch.utils.data.DataLoader(
         torchfcn.datasets.CityScapesClassSeg(
-            root, split='val', transform=True, preprocess=False,
+            root, split=['val'], transform=True, preprocess=False,
         ), batch_size=1, shuffle=False, **kwargs
     )
 
@@ -109,7 +114,9 @@ def main():
         optimizer=optim,
         train_loader=train_loader,
         val_loader=val_loader,
+        mix_loader=mix_loader,
         out=out,
+        nEpochs=5,
         max_iter=cfg['max_iteration'],
     )
     trainer.epoch = start_epoch

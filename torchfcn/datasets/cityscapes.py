@@ -87,7 +87,7 @@ class CityScapesClassSeg(data.Dataset):
         33: 20,  # Bicycle
     }
 
-    def __init__(self, root, split='train', transform=False, preprocess=False):
+    def __init__(self, root, split=['train'], transform=False, preprocess=False):
         self.root = root
         self.split = split
         self._transform = transform
@@ -95,30 +95,31 @@ class CityScapesClassSeg(data.Dataset):
 
         dataset_dir = osp.join(self.root, 'cityscapes/')
 
-        if (preprocess):
-            self.preprocess_dataset(dataset_dir, split)
+        for sp in split:
+            if (preprocess):
+                self.preprocess_dataset(dataset_dir, sp)
 
-        tar_img_dir = osp.join(dataset_dir, 'leftImg8bit/%s' % split)
-        tar_lbl_dir = osp.join(dataset_dir, 'gtFine/%s' % split)  # gtFine
+            tar_img_dir = osp.join(dataset_dir, 'leftImg8bit/%s' % sp)
+            tar_lbl_dir = osp.join(dataset_dir, 'gtFine/%s' % sp)  # gtFine
 
-        for city in os.listdir(tar_img_dir):
-            city_img_dir = osp.join(tar_img_dir, city)
-            city_lbl_dir = osp.join(tar_lbl_dir, city)
-            imgsets_file = osp.join(city_img_dir, 'imgsets.txt')
+            for city in os.listdir(tar_img_dir):
+                city_img_dir = osp.join(tar_img_dir, city)
+                city_lbl_dir = osp.join(tar_lbl_dir, city)
+                imgsets_file = osp.join(city_img_dir, 'imgsets.txt')
 
-            if not osp.isdir(city_img_dir):
-                continue
+                if not osp.isdir(city_img_dir):
+                    continue
 
-            for did in open(imgsets_file):
-                did = did.strip()
-                img_file = osp.join(city_img_dir, '%s.png' % did)
-                lbl_file = osp.join(
-                    city_lbl_dir, '%s.png' % did
-                )
-                self.files.append({
-                    'img': img_file,
-                    'lbl': lbl_file,
-                })
+                for did in open(imgsets_file):
+                    did = did.strip()
+                    img_file = osp.join(city_img_dir, '%s.png' % did)
+                    lbl_file = osp.join(
+                        city_lbl_dir, '%s.png' % did
+                    )
+                    self.files.append({
+                        'img': img_file,
+                        'lbl': lbl_file,
+                    })
 
     def myfunc(self, a):
         # print(a)
