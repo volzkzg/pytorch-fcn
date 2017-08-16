@@ -29,6 +29,7 @@ configurations = {
         momentum=0.99,
         weight_decay=0.0005,
         interval_validate=4000,
+        fcn32s_pretrained_model=torchfcn.models.FCN32s.download(),
     )
 }
 
@@ -38,8 +39,8 @@ here = osp.dirname(osp.abspath(__file__))
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-g', '--gpu', type=int, required=True)
-    parser.add_argument('-c', '--config', type=str, default=1,
+    parser.add_argument('-g', '--gpu', type=str, required=True)
+    parser.add_argument('-c', '--config', type=int, default=1,
                         choices=configurations.keys())
     parser.add_argument('--resume', help='Checkpoint path')
     args = parser.parse_args()
