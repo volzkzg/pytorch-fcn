@@ -22,6 +22,13 @@ configurations = {
         weight_decay=0.0005,
         interval_validate=4000,
         fcn32s_pretrained_model=torchfcn.models.FCN32s.download(),
+    ),
+    2: dict(
+        max_iteration=100000,
+        lr=1.0e-4,
+        momentum=0.99,
+        weight_decay=0.0005,
+        interval_validate=4000,
     )
 }
 
@@ -32,7 +39,7 @@ here = osp.dirname(osp.abspath(__file__))
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-g', '--gpu', type=int, required=True)
-    parser.add_argument('-c', '--config', type=int, default=1,
+    parser.add_argument('-c', '--config', type=str, default=1,
                         choices=configurations.keys())
     parser.add_argument('--resume', help='Checkpoint path')
     args = parser.parse_args()
@@ -49,21 +56,29 @@ def main():
     if cuda:
         torch.cuda.manual_seed(1337)
 
+    if torch.cuda.device_count() == 1:
+        batch_size = 1
+    else:
+        batch_size = 2 * torch.cuda.device_count()
+
     # 1. dataset
 
     root = osp.expanduser('~/data/datasets')
     kwargs = {'num_workers': 4, 'pin_memory': True} if cuda else {}
     train_loader = torch.utils.data.DataLoader(
-        torchfcn.datasets.SBDClassSeg(root, split='train', transform=True),
-        batch_size=1, shuffle=True, **kwargs)
+        torchfcn.datasets.CityScapesClassSeg(
+            root, split=['train'], transform=True, preprocess=False,
+        ), batch_size=batch_size, shuffle=True, **kwargs
+    )
     val_loader = torch.utils.data.DataLoader(
-        torchfcn.datasets.VOC2011ClassSeg(
-            root, split='seg11valid', transform=True),
-        batch_size=1, shuffle=False, **kwargs)
+        torchfcn.datasets.CityScapesClassSeg(
+            root, split=['val'], transform=True, preprocess=False,
+        ), batch_size=batch_size, shuffle=False, **kwargs
+    )
 
     # 2. model
 
-    model = torchfcn.models.FCN16s(n_class=21)
+    model = torchfcn.models.FCN16s(n_class=20)
     start_epoch = 0
     start_iteration = 0
     if resume:
@@ -76,18 +91,21 @@ def main():
         fcn32s.load_state_dict(torch.load(cfg['fcn32s_pretrained_model']))
         model.copy_params_from_fcn32s(fcn32s)
     if cuda:
-        model = model.cuda()
+        if torch.cuda.device_count() == 1:
+            model = model.cuda()
+        else:
+            model = torch.nn.DataParallel(model).cuda()
 
     # 3. optimizer
 
-    optim = torch.optim.SGD(
+    optim = torch.optim.Adam(
         [
             {'params': get_parameters(model, bias=False)},
             {'params': get_parameters(model, bias=True),
              'lr': cfg['lr'] * 2, 'weight_decay': 0},
         ],
         lr=cfg['lr'],
-        momentum=cfg['momentum'],
+        # momentum=cfg['momentum'],
         weight_decay=cfg['weight_decay'])
     if resume:
         optim.load_state_dict(checkpoint['optim_state_dict'])
@@ -100,7 +118,8 @@ def main():
         val_loader=val_loader,
         out=out,
         max_iter=cfg['max_iteration'],
-        interval_validate=cfg.get('interval_validate', len(train_loader)),
+        # interval_validate=cfg.get('interval_validate', len(train_loader)),
+        nEpochs=10,
     )
     trainer.epoch = start_epoch
     trainer.iteration = start_iteration
