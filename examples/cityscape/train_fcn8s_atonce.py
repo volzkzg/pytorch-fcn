@@ -68,7 +68,9 @@ def main():
             root, split=['val'], transform=True, preprocess=False,
         ), batch_size=1, shuffle=False, **kwargs
     )
-
+    print(len(train_loader))
+    print(len(val_loader))
+    exit(0)
     # train_loader = torch.utils.data.DataLoader(
     #     torchfcn.datasets.SBDClassSeg(root, split='train', transform=True),
     #     batch_size=1, shuffle=True, **kwargs)
