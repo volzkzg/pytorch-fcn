@@ -3,7 +3,7 @@ import os.path as osp
 from PIL import Image
 
 root = osp.expanduser('~/data/datasets')
-for split in ['train', 'val']:
+for split in ['train', 'val', 'test']:
     dataset_dir = osp.join(root, 'cityscapes/')
 
     img_dir = osp.join(dataset_dir, 'leftImg8bit/%s' % split)
